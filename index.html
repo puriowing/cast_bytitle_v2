@@ -159,6 +159,42 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px dashed #f1f5f9;
         }
+
+        /* Tab Styling */
+        .tab-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #64748b;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            bottom: -2px;
+        }
+        .tab-button:hover {
+            color: #475569;
+            background-color: #f8fafc;
+        }
+        .tab-button.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+            background-color: #f8fafc;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="pb-24">
@@ -199,8 +235,8 @@
                     <div class="relative w-full sm:w-64 group">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 ml-1">Compare With</label>
                         <select id="compareSelector" class="w-full bg-white border border-slate-300 text-slate-700 text-sm rounded-md focus:ring-slate-500 focus:border-slate-500 block p-2 font-bold shadow-sm cursor-pointer hover:border-slate-400 transition-colors">
-                            <option value="">(比較なし)</option>
-                            <option value="avg">基準値 (全体平均)</option>
+                            <option value="none">(比較なし)</option>
+                            <option value="avg" selected>基準値 (全体平均)</option>
                             <option value="movie1">機動戦士ギャラクシー -最終章-</option>
                             <option value="movie2">恋する喫茶店と雨の日</option>
                             <option value="movie3">MISSION: BREAKOUT (字幕/吹替)</option>
@@ -234,6 +270,250 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
 
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="pre-release">公開前分析</button>
+            <button class="tab-button" data-tab="post-release">公開後分析</button>
+        </div>
+
+        <!-- 公開前タブ -->
+        <div id="tab-pre-release" class="tab-content active">
+            <!-- 公開前: 公開予定作品への期待度分析 (Q24) -->
+            <div class="section-container">
+                <div class="section-header-row">
+                    <div class="section-title">
+                        <div class="icon-box bg-amber-100 text-amber-600"><i data-lucide="calendar-days"></i></div>
+                        公開予定作品への期待度分析 (Q24)
+                    </div>
+                    <button class="text-slate-400 hover:text-indigo-600 transition"><i data-lucide="more-horizontal"></i></button>
+                </div>
+
+                <div class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p class="text-sm text-slate-700">
+                        <span class="font-bold text-amber-700">質問内容:</span> 
+                        「今後公開予定の作品について、各作品の鑑賞意向を教えてください。」
+                    </p>
+                    <p class="text-xs text-slate-600 mt-2">
+                        各作品について「絶対観る」「観るかも」「興味なし」「知らない」の4つの選択肢から回答
+                    </p>
+                </div>
+
+                <!-- この作品自体の鑑賞意向 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- 左側: 該当作品 -->
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">この作品の鑑賞意向</h3>
+                            <span class="badge bg-amber-100 text-amber-700 flex-shrink-0 ml-2">期待度</span>
+                        </div>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="ownIntentionChart"></canvas>
+                        </div>
+                        <p class="text-xs font-bold text-slate-600 mt-2 text-center" id="ownIntentionLabel"></p>
+                        <div class="mt-4 flex justify-center gap-4 text-xs">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                <span>絶対観る</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-amber-300"></div>
+                                <span>観るかも</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                                <span>興味なし</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-400"></div>
+                                <span>知らない</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側: 比較作品 -->
+                    <div class="dashboard-card !bg-white" id="compIntentionCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">比較作品の鑑賞意向</h3>
+                            <span class="badge bg-slate-100 text-slate-700 flex-shrink-0 ml-2">比較</span>
+                        </div>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="compIntentionChart"></canvas>
+                        </div>
+                        <p class="text-xs font-bold text-slate-600 mt-2 text-center" id="compIntentionLabel"></p>
+                        <div class="mt-4 flex justify-center gap-4 text-xs">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-500"></div>
+                                <span>絶対観る</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-400"></div>
+                                <span>観るかも</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                                <span>興味なし</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-200"></div>
+                                <span>知らない</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 属性別クロス集計 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- 左側: 該当作品 -->
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 性別・年代</h3>
+                            <span class="badge bg-blue-100 text-blue-700 flex-shrink-0 ml-2">属性分析</span>
+                        </div>
+                        <div id="upcomingByDemographicsContainer" style="height: 350px;">
+                            <!-- 動的に生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 右側: 比較作品 -->
+                    <div class="dashboard-card !bg-white" id="compDemographicsCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 性別・年代</h3>
+                            <span class="badge bg-slate-100 text-slate-700 flex-shrink-0 ml-2">比較</span>
+                        </div>
+                        <div id="compUpcomingByDemographicsContainer" style="height: 350px;">
+                            <!-- 動的に生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クロス集計: 認知経路 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 認知経路</h3>
+                            <i data-lucide="megaphone" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="upcomingBySourceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card !bg-white" id="compSourceCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 認知経路</h3>
+                            <i data-lucide="megaphone" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="compUpcomingBySourceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クロス集計: 鑑賞動機 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 鑑賞動機</h3>
+                            <i data-lucide="target" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="upcomingByMotivationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card !bg-white" id="compMotivationCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 鑑賞動機</h3>
+                            <i data-lucide="target" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="compUpcomingByMotivationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クロス集計: 同行者 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 同行者</h3>
+                            <i data-lucide="users-2" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="upcomingByCompanionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card !bg-white" id="compCompanionCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 同行者</h3>
+                            <i data-lucide="users-2" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="compUpcomingByCompanionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クロス集計: 鑑賞頻度 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 鑑賞頻度</h3>
+                            <i data-lucide="repeat" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="upcomingByFrequencyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card !bg-white" id="compFrequencyCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 鑑賞頻度</h3>
+                            <i data-lucide="repeat" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="compUpcomingByFrequencyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クロス集計: 決定時期 - 左右に分けて表示 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-card !bg-white">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 決定時期</h3>
+                            <i data-lucide="timer" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="upcomingByTimingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card !bg-white" id="compTimingCard">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm flex-1">「絶対観る」意向 × 決定時期</h3>
+                            <i data-lucide="timer" class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2"></i>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="compUpcomingByTimingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- インサイト -->
+                <div class="bg-amber-50 border border-amber-100 rounded-lg p-4 flex gap-4 items-start">
+                    <div class="shrink-0 text-amber-600 mt-1"><i data-lucide="lightbulb" class="w-5 h-5"></i></div>
+                    <div class="w-full">
+                        <h3 class="font-bold text-amber-900 text-sm mb-2">公開前分析インサイト</h3>
+                        <p class="text-slate-700 text-sm leading-relaxed" id="txt_upcoming_insight">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 公開後タブ -->
+        <div id="tab-post-release" class="tab-content">
         <!-- 1. 作品ポテンシャル・サマリー (KPI Summary) -->
         <div class="section-container">
             <div class="section-header-row">
@@ -631,6 +911,8 @@
                 <p class="text-slate-700 text-sm leading-relaxed"><span class="font-bold text-indigo-700">Comment Insight:</span> <span id="txt_comment_insight">--</span></p>
             </div>
         </div>
+        </div>
+        <!-- End of 公開後タブ -->
 
     </main>
 
@@ -650,6 +932,7 @@
             const sourceLabels = ['テレビCM', 'テレビ番組', '劇場予告', 'ポスター', '交通広告', '公式サイト', 'Webニュース', '公式SNS', '一般SNS', '動画広告', 'Webバナー', '知人', 'その他'];
             const motivationLabels = ['キャスト', '監督', '原作', 'シリーズ', '物語', '予告映像', 'ジャンル', '評判', '話題性', '誘われた', '設備(IMAX)', '都合', '特典', 'その他'];
             const repeatCountLabels = ['初めて', '2回目', '3回目', '4回目', '5回以上'];
+            const upcomingMoviesLabels = ['作品A', '作品B', '作品C', '作品D', '作品E', '作品F', '作品G', '作品H', '作品I', '作品J'];
 
             // --- Mock Data Set ---
             const dataSet = {
@@ -692,6 +975,25 @@
                         run_type: "初動・先行逃げ切り型",
                         repeat_insight: "5回以上の鑑賞者が20%も存在し、異常なほどの熱量です。入場者特典の効果が最大化されています。",
                         comment_insight: "平均145文字と非常に長く、熱量の高さが際立ちます。「ありがとう」「号泣」など感謝の言葉が多く、ファンの満足度はMaxです。"
+                    },
+                    upcomingData: {
+                        // Q24: この作品自体についての鑑賞意向分布 [絶対観る, 観るかも, 興味なし, 知らない]
+                        ownIntentionDistribution: [25, 35, 25, 15],
+                        // 「絶対観る」意向を持つ人の属性分布
+                        byDemographics: {
+                            male: 70, female: 30, ageDist: [15, 25, 35, 20, 5]
+                        },
+                        // 「絶対観る」意向を持つ人の認知経路
+                        bySource: [5, 3, 15, 2, 1, 5, 3, 30, 25, 3, 2, 2, 4],
+                        // 「絶対観る」意向を持つ人の鑑賞動機
+                        byMotivation: [5, 3, 20, 35, 8, 5, 2, 3, 2, 1, 3, 1, 2, 0],
+                        // 「絶対観る」意向を持つ人の同行者
+                        byCompanion: [50, 25, 10, 15],
+                        // 「絶対観る」意向を持つ人の鑑賞頻度
+                        byFrequency: [35, 30, 25, 10],
+                        // 「絶対観る」意向を持つ人の決定時期
+                        byTiming: [8, 12, 30, 50],
+                        insight: "「絶対観る」意向は平均15%で、作品Aが25%と最高。意向を持つ人は男性70%・30代中心で、SNS経由の認知が55%と高く、シリーズファン層が35%を占めます。「観るかも」を含めると平均45%となり、潜在的な需要は高いです。"
                     }
                 },
                 "movie2": {
@@ -733,6 +1035,18 @@
                         run_type: "デート・デイリー需要型",
                         repeat_insight: "9割が初回鑑賞。「一見さん」が大半のため、リピーター施策よりも新規流入を続ける施策が優先です。",
                         comment_insight: "「尊い」「かっこいい」等の単語感情的ワードが中心。「長い」「微妙」といったネガティブワードも散見され、内容評価は割れています。"
+                    },
+                    upcomingData: {
+                        ownIntentionDistribution: [22, 48, 20, 10],
+                        byDemographics: {
+                            male: 20, female: 80, ageDist: [35, 30, 20, 10, 5]
+                        },
+                        bySource: [20, 35, 5, 2, 3, 5, 10, 8, 5, 2, 3, 5, 2],
+                        byMotivation: [48, 2, 8, 0, 12, 5, 5, 2, 2, 5, 0, 2, 1, 1],
+                        byCompanion: [5, 60, 30, 5],
+                        byFrequency: [2, 10, 40, 48],
+                        byTiming: [35, 30, 25, 10],
+                        insight: "「絶対観る」意向は平均12%で、作品Bが22%と最高。意向を持つ人は女性80%・20代中心で、TVCM・番組経由が55%と高く、キャスト動機が48%と突出。「観るかも」を含めると平均60%となり、デート需要が高いです。"
                     }
                 },
                 "movie3": {
@@ -774,6 +1088,18 @@
                         run_type: "ロングラン・体験重視型",
                         repeat_insight: "初回が7割ですが、2回目鑑賞者も20%と育ち始めています。IMAXで見た後に4Dで見るなどの「変味」需要があります。",
                         comment_insight: "「迫力」「爽快」など体験価値への言及が多数。平均文字数は標準的ですが、ポジティブ率は高く、他者推奨につながりやすい感想です。"
+                    },
+                    upcomingData: {
+                        ownIntentionDistribution: [20, 35, 30, 15],
+                        byDemographics: {
+                            male: 55, female: 45, ageDist: [12, 28, 30, 22, 8]
+                        },
+                        bySource: [20, 10, 30, 5, 2, 5, 5, 5, 5, 5, 3, 2, 3],
+                        byMotivation: [15, 5, 5, 0, 15, 25, 10, 5, 5, 5, 15, 2, 1, 2],
+                        byCompanion: [30, 30, 30, 10],
+                        byFrequency: [20, 30, 30, 20],
+                        byTiming: [25, 25, 30, 20],
+                        insight: "「絶対観る」意向は平均12%で、作品Bが20%と最高。性別は均衡し、20-30代が58%を占めます。予告編経由が30%と高く、予告映像動機が25%と突出。IMAX等の設備動機も15%と高く、体験重視型の期待が高いです。"
                     }
                 },
                 "avg": {
@@ -793,7 +1119,19 @@
                     formatData: { label: ['通常', '特殊', '他', '他'], data: [75, 25, 0, 0] }, // Match length
                     repeatCountData: [80, 15, 3, 1, 1],
                     commentData: { avgChars: 70, sentiment: 70, keywords: [], comments: [] },
-                    insights: {}
+                    insights: {},
+                    upcomingData: {
+                        ownIntentionDistribution: [15, 30, 35, 20], // 基準値
+                        byDemographics: {
+                            male: 50, female: 50, ageDist: [15, 25, 25, 20, 15]
+                        },
+                        bySource: [15, 15, 15, 5, 5, 5, 5, 10, 10, 5, 5, 3, 2],
+                        byMotivation: [15, 10, 10, 5, 15, 10, 5, 5, 5, 5, 5, 5, 3, 2],
+                        byCompanion: [40, 30, 20, 10],
+                        byFrequency: [25, 25, 25, 25],
+                        byTiming: [25, 25, 25, 25],
+                        insight: "基準値（全体平均）です。"
+                    }
                 }
             };
 
@@ -1132,10 +1470,963 @@
                 renderCharts(mainKey, compKey);
             }
 
-            document.getElementById('movieSelector').addEventListener('change', updateDashboard);
-            document.getElementById('compareSelector').addEventListener('change', updateDashboard);
+            // Tab functionality
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    // Update buttons
+                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    // Update content
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(`tab-${tabId}`).classList.add('active');
+                    // Re-render charts if needed
+                    if (tabId === 'pre-release') {
+                        const mainKey = document.getElementById('movieSelector').value;
+                        const compKey = document.getElementById('compareSelector').value;
+                        renderUpcomingCharts(mainKey, compKey);
+                    } else {
+                        updateDashboard();
+                    }
+                });
+            });
 
-            updateDashboard();
+            // Render upcoming movies charts
+            function renderUpcomingCharts(mainKey, compareKey) {
+                const main = dataSet[mainKey];
+                if (!main.upcomingData) return;
+                // デフォルトで基準値（avg）を表示
+                const effectiveCompareKey = compareKey && compareKey !== 'none' ? compareKey : 'avg';
+                const comp = dataSet[effectiveCompareKey] && dataSet[effectiveCompareKey].upcomingData ? dataSet[effectiveCompareKey] : null;
+
+                const mainColor = '#6366f1';
+                const compColor = '#94a3b8';
+
+                // 1. この作品自体の鑑賞意向（左側：該当作品、右側：比較作品）
+                const intentionLabels = ['絶対観る', '観るかも', '興味なし', '知らない'];
+                
+                const mainData = main.upcomingData.ownIntentionDistribution || [0, 0, 0, 0];
+                const compData = comp && comp.upcomingData && comp.upcomingData.ownIntentionDistribution 
+                    ? comp.upcomingData.ownIntentionDistribution : null;
+                
+                // 左側：該当作品の棒グラフ
+                const ctxMain = document.getElementById('ownIntentionChart');
+                if (ctxMain) {
+                    if (charts.ownIntention) charts.ownIntention.destroy();
+                    
+                    document.getElementById('ownIntentionLabel').innerText = main.name;
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainData.map((val, idx) => {
+                        if (compData && compData[idx] !== undefined) {
+                            const gap = val - compData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.ownIntention = new Chart(ctxMain, {
+                        type: 'bar',
+                        data: {
+                            labels: intentionLabels,
+                            datasets: [{
+                                label: main.name,
+                                data: mainData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: (items) => {
+                                            if (items.length > 0) {
+                                                return intentionLabels[items[0].dataIndex] || '';
+                                            }
+                                            return '';
+                                        },
+                                        label: (context) => {
+                                            const label = intentionLabels[context.dataIndex];
+                                            const value = mainData[context.dataIndex];
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compData && compData[context.dataIndex] !== undefined) {
+                                                const compValue = compData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品の棒グラフ（デフォルトで基準値を表示）
+                const ctxComp = document.getElementById('compIntentionChart');
+                const compCard = document.getElementById('compIntentionCard');
+                if (comp && comp.upcomingData && comp.upcomingData.ownIntentionDistribution && ctxComp && compCard) {
+                    compCard.style.display = 'block';
+                    if (charts.compIntention) charts.compIntention.destroy();
+                    
+                    const compData = comp.upcomingData.ownIntentionDistribution;
+                    document.getElementById('compIntentionLabel').innerText = comp.name;
+                    
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compData.map(() => '#94a3b8');
+                    
+                    charts.compIntention = new Chart(ctxComp, {
+                        type: 'bar',
+                        data: {
+                            labels: intentionLabels,
+                            datasets: [{
+                                label: comp.name,
+                                data: compData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: (items) => {
+                                            if (items.length > 0) {
+                                                return intentionLabels[items[0].dataIndex] || '';
+                                            }
+                                            return '';
+                                        },
+                                        label: (context) => {
+                                            const label = intentionLabels[context.dataIndex];
+                                            const compValue = compData[context.dataIndex];
+                                            const mainValue = mainData[context.dataIndex];
+                                            const gap = mainValue - compValue;
+                                            return [
+                                                `${comp.name}: ${compValue.toFixed(1)}%`,
+                                                `${main.name}: ${mainValue.toFixed(1)}%`,
+                                                `GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compCard) compCard.style.display = 'block'; // 常に表示
+                    if (charts.compIntention) {
+                        charts.compIntention.destroy();
+                        charts.compIntention = null;
+                    }
+                }
+
+                // 2. 「絶対観る」意向 × 性別・年代（左側：該当作品、右側：比較作品）
+                // 性別×年代の組み合わせラベル（10代男性、10代女性、20代男性、20代女性...）
+                const genderAgeLabels = [];
+                const ageLabels = ['10代', '20代', '30代', '40代', '50代+'];
+                ageLabels.forEach(age => {
+                    genderAgeLabels.push(`${age}男性`);
+                    genderAgeLabels.push(`${age}女性`);
+                });
+                
+                // データを性別×年代の組み合わせに変換する関数
+                const convertToGenderAgeData = (demographics) => {
+                    const result = [];
+                    const maleRatio = demographics.male / 100;
+                    const femaleRatio = demographics.female / 100;
+                    demographics.ageDist.forEach(age => {
+                        result.push(age * maleRatio);
+                        result.push(age * femaleRatio);
+                    });
+                    return result;
+                };
+                
+                // 左側：該当作品
+                const container = document.getElementById('upcomingByDemographicsContainer');
+                if (container) {
+                    // 既存のチャートを削除
+                    if (charts.demographicsChart) {
+                        charts.demographicsChart.destroy();
+                        charts.demographicsChart = null;
+                    }
+                    
+                    // 既存のコンテナをクリア
+                    container.innerHTML = '';
+                    
+                    const mainData = convertToGenderAgeData(main.upcomingData.byDemographics);
+                    const compData = comp && comp.upcomingData ? convertToGenderAgeData(comp.upcomingData.byDemographics) : null;
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainData.map((val, idx) => {
+                        if (compData && compData[idx] !== undefined) {
+                            const gap = val - compData[idx]; // メイン - 比較
+                            // 比較作品よりも10%以上大きい：赤
+                            if (gap >= 10) return '#ef4444';
+                            // 比較作品よりも5-9%大きい：オレンジ
+                            if (gap >= 5) return '#f97316';
+                            // 比較作品よりも10%以上小さい：青
+                            if (gap <= -10) return '#3b82f6';
+                            // 比較作品よりも5-9%小さい：水色
+                            if (gap <= -5) return '#06b6d4';
+                        }
+                        // それ以外（±5%以内または比較データなし）：グレー
+                        return '#6b7280';
+                    });
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'demographicsChart';
+                    container.appendChild(canvas);
+                    
+                    charts.demographicsChart = new Chart(canvas, {
+                        type: 'bar',
+                        data: {
+                            labels: genderAgeLabels,
+                            datasets: [{
+                                label: main.name,
+                                data: mainData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compData && compData[context.dataIndex] !== undefined) {
+                                                const compValue = compData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品
+                const compContainer = document.getElementById('compUpcomingByDemographicsContainer');
+                const compDemographicsCard = document.getElementById('compDemographicsCard');
+                if (comp && comp.upcomingData && compContainer && compDemographicsCard) {
+                    compDemographicsCard.style.display = 'block';
+                    
+                    // 既存のチャートを削除
+                    if (charts.compDemographicsChart) {
+                        charts.compDemographicsChart.destroy();
+                        charts.compDemographicsChart = null;
+                    }
+                    
+                    // 既存のコンテナをクリア
+                    compContainer.innerHTML = '';
+                    
+                    const compData = convertToGenderAgeData(comp.upcomingData.byDemographics);
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compData.map(() => '#94a3b8');
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'compDemographicsChart';
+                    compContainer.appendChild(canvas);
+                    
+                    charts.compDemographicsChart = new Chart(canvas, {
+                        type: 'bar',
+                        data: {
+                            labels: genderAgeLabels,
+                            datasets: [{
+                                label: comp.name,
+                                data: compData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainData && mainData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compDemographicsCard) compDemographicsCard.style.display = 'none';
+                }
+
+                // 3. 「絶対観る」意向 × 認知経路（左側：該当作品、右側：比較作品）
+                // データを外側で定義して、両方のグラフからアクセスできるようにする
+                const mainSourceData = main.upcomingData.bySource;
+                const compSourceData = comp && comp.upcomingData ? comp.upcomingData.bySource : null;
+                
+                const ctx3 = document.getElementById('upcomingBySourceChart');
+                if (ctx3) {
+                    if (charts.upcomingBySource) charts.upcomingBySource.destroy();
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainSourceData.map((val, idx) => {
+                        if (compSourceData && compSourceData[idx] !== undefined) {
+                            const gap = val - compSourceData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.upcomingBySource = new Chart(ctx3, {
+                        type: 'bar',
+                        data: {
+                            labels: sourceLabels,
+                            datasets: [{
+                                label: main.name,
+                                data: mainSourceData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compSourceData && compSourceData[context.dataIndex] !== undefined) {
+                                                const compValue = compSourceData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品（デフォルトで基準値を表示）
+                const ctxCompSource = document.getElementById('compUpcomingBySourceChart');
+                const compSourceCard = document.getElementById('compSourceCard');
+                if (comp && comp.upcomingData && ctxCompSource && compSourceCard) {
+                    compSourceCard.style.display = 'block';
+                    if (charts.compUpcomingBySource) charts.compUpcomingBySource.destroy();
+                    
+                    const compSourceDataForChart = comp.upcomingData.bySource;
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compSourceDataForChart.map(() => '#94a3b8');
+                    
+                    charts.compUpcomingBySource = new Chart(ctxCompSource, {
+                        type: 'bar',
+                        data: {
+                            labels: sourceLabels,
+                            datasets: [{
+                                label: comp.name,
+                                data: compSourceDataForChart,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainSourceData && mainSourceData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainSourceData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compSourceCard) compSourceCard.style.display = 'block'; // 常に表示
+                }
+
+                // 4. 「絶対観る」意向 × 鑑賞動機（左側：該当作品、右側：比較作品）
+                // データを外側で定義して、両方のグラフからアクセスできるようにする
+                const mainMotivationData = main.upcomingData.byMotivation;
+                const compMotivationData = comp && comp.upcomingData ? comp.upcomingData.byMotivation : null;
+                
+                const ctx4 = document.getElementById('upcomingByMotivationChart');
+                if (ctx4) {
+                    if (charts.upcomingByMotivation) charts.upcomingByMotivation.destroy();
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainMotivationData.map((val, idx) => {
+                        if (compMotivationData && compMotivationData[idx] !== undefined) {
+                            const gap = val - compMotivationData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.upcomingByMotivation = new Chart(ctx4, {
+                        type: 'bar',
+                        data: {
+                            labels: motivationLabels,
+                            datasets: [{
+                                label: main.name,
+                                data: mainMotivationData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compMotivationData && compMotivationData[context.dataIndex] !== undefined) {
+                                                const compValue = compMotivationData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品（デフォルトで基準値を表示）
+                const ctxCompMotivation = document.getElementById('compUpcomingByMotivationChart');
+                const compMotivationCard = document.getElementById('compMotivationCard');
+                if (comp && comp.upcomingData && ctxCompMotivation && compMotivationCard) {
+                    compMotivationCard.style.display = 'block';
+                    if (charts.compUpcomingByMotivation) charts.compUpcomingByMotivation.destroy();
+                    
+                    const compMotivationDataForChart = comp.upcomingData.byMotivation;
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compMotivationDataForChart.map(() => '#94a3b8');
+                    
+                    charts.compUpcomingByMotivation = new Chart(ctxCompMotivation, {
+                        type: 'bar',
+                        data: {
+                            labels: motivationLabels,
+                            datasets: [{
+                                label: comp.name,
+                                data: compMotivationDataForChart,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainMotivationData && mainMotivationData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainMotivationData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compMotivationCard) compMotivationCard.style.display = 'block'; // 常に表示
+                }
+
+                // 5. 「絶対観る」意向 × 同行者（左側：該当作品、右側：比較作品）
+                // データを外側で定義して、両方のグラフからアクセスできるようにする
+                const mainCompanionData = main.upcomingData.byCompanion;
+                const compCompanionData = comp && comp.upcomingData ? comp.upcomingData.byCompanion : null;
+                
+                const ctx5 = document.getElementById('upcomingByCompanionChart');
+                if (ctx5) {
+                    if (charts.upcomingByCompanion) charts.upcomingByCompanion.destroy();
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainCompanionData.map((val, idx) => {
+                        if (compCompanionData && compCompanionData[idx] !== undefined) {
+                            const gap = val - compCompanionData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.upcomingByCompanion = new Chart(ctx5, {
+                        type: 'bar',
+                        data: {
+                            labels: ['1人', '友人', '恋人', '家族'],
+                            datasets: [{
+                                label: main.name,
+                                data: mainCompanionData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compCompanionData && compCompanionData[context.dataIndex] !== undefined) {
+                                                const compValue = compCompanionData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品（デフォルトで基準値を表示）
+                const ctxCompCompanion = document.getElementById('compUpcomingByCompanionChart');
+                const compCompanionCard = document.getElementById('compCompanionCard');
+                if (comp && comp.upcomingData && ctxCompCompanion && compCompanionCard) {
+                    compCompanionCard.style.display = 'block';
+                    if (charts.compUpcomingByCompanion) charts.compUpcomingByCompanion.destroy();
+                    
+                    const compCompanionDataForChart = comp.upcomingData.byCompanion;
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compCompanionDataForChart.map(() => '#94a3b8');
+                    
+                    charts.compUpcomingByCompanion = new Chart(ctxCompCompanion, {
+                        type: 'bar',
+                        data: {
+                            labels: ['1人', '友人', '恋人', '家族'],
+                            datasets: [{
+                                label: comp.name,
+                                data: compCompanionDataForChart,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainCompanionData && mainCompanionData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainCompanionData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compCompanionCard) compCompanionCard.style.display = 'block'; // 常に表示
+                }
+
+                // 6. 「絶対観る」意向 × 鑑賞頻度（左側：該当作品、右側：比較作品）
+                // データを外側で定義して、両方のグラフからアクセスできるようにする
+                const mainFrequencyData = main.upcomingData.byFrequency;
+                const compFrequencyData = comp && comp.upcomingData ? comp.upcomingData.byFrequency : null;
+                
+                const ctx6 = document.getElementById('upcomingByFrequencyChart');
+                if (ctx6) {
+                    if (charts.upcomingByFrequency) charts.upcomingByFrequency.destroy();
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainFrequencyData.map((val, idx) => {
+                        if (compFrequencyData && compFrequencyData[idx] !== undefined) {
+                            const gap = val - compFrequencyData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.upcomingByFrequency = new Chart(ctx6, {
+                        type: 'bar',
+                        data: {
+                            labels: ['ヘビー', '月1回', 'ライト', '新規'],
+                            datasets: [{
+                                label: main.name,
+                                data: mainFrequencyData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compFrequencyData && compFrequencyData[context.dataIndex] !== undefined) {
+                                                const compValue = compFrequencyData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品（デフォルトで基準値を表示）
+                const ctxCompFrequency = document.getElementById('compUpcomingByFrequencyChart');
+                const compFrequencyCard = document.getElementById('compFrequencyCard');
+                if (comp && comp.upcomingData && ctxCompFrequency && compFrequencyCard) {
+                    compFrequencyCard.style.display = 'block';
+                    if (charts.compUpcomingByFrequency) charts.compUpcomingByFrequency.destroy();
+                    
+                    const compFrequencyDataForChart = comp.upcomingData.byFrequency;
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compFrequencyDataForChart.map(() => '#94a3b8');
+                    
+                    charts.compUpcomingByFrequency = new Chart(ctxCompFrequency, {
+                        type: 'bar',
+                        data: {
+                            labels: ['ヘビー', '月1回', 'ライト', '新規'],
+                            datasets: [{
+                                label: comp.name,
+                                data: compFrequencyDataForChart,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainFrequencyData && mainFrequencyData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainFrequencyData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compFrequencyCard) compFrequencyCard.style.display = 'block'; // 常に表示
+                }
+
+                // 7. 「絶対観る」意向 × 決定時期（左側：該当作品、右側：比較作品）
+                // データを外側で定義して、両方のグラフからアクセスできるようにする
+                const mainTimingData = main.upcomingData.byTiming;
+                const compTimingData = comp && comp.upcomingData ? comp.upcomingData.byTiming : null;
+                
+                const ctx7 = document.getElementById('upcomingByTimingChart');
+                if (ctx7) {
+                    if (charts.upcomingByTiming) charts.upcomingByTiming.destroy();
+                    
+                    // GAPを計算して色を決定（メイン作品のみ色分け）
+                    const backgroundColor = mainTimingData.map((val, idx) => {
+                        if (compTimingData && compTimingData[idx] !== undefined) {
+                            const gap = val - compTimingData[idx]; // メイン - 比較
+                            if (gap >= 10) return '#ef4444'; // 赤
+                            if (gap >= 5) return '#f97316'; // オレンジ
+                            if (gap <= -10) return '#3b82f6'; // 青
+                            if (gap <= -5) return '#06b6d4'; // 水色
+                        }
+                        return '#6b7280'; // グレー
+                    });
+                    
+                    charts.upcomingByTiming = new Chart(ctx7, {
+                        type: 'bar',
+                        data: {
+                            labels: ['当日', '1週間前', '1ヶ月前', 'それ以上前'],
+                            datasets: [{
+                                label: main.name,
+                                data: mainTimingData,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${main.name}: ${value.toFixed(1)}%`];
+                                            if (compTimingData && compTimingData[context.dataIndex] !== undefined) {
+                                                const compValue = compTimingData[context.dataIndex];
+                                                const gap = value - compValue;
+                                                tooltip.push(`${comp.name}: ${compValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 右側：比較作品（デフォルトで基準値を表示）
+                const ctxCompTiming = document.getElementById('compUpcomingByTimingChart');
+                const compTimingCard = document.getElementById('compTimingCard');
+                if (comp && comp.upcomingData && ctxCompTiming && compTimingCard) {
+                    compTimingCard.style.display = 'block';
+                    if (charts.compUpcomingByTiming) charts.compUpcomingByTiming.destroy();
+                    
+                    const compTimingDataForChart = comp.upcomingData.byTiming;
+                    // 比較作品側は色分けしない（常にデフォルト色）
+                    const backgroundColor = compTimingDataForChart.map(() => '#94a3b8');
+                    
+                    charts.compUpcomingByTiming = new Chart(ctxCompTiming, {
+                        type: 'bar',
+                        data: {
+                            labels: ['当日', '1週間前', '1ヶ月前', 'それ以上前'],
+                            datasets: [{
+                                label: comp.name,
+                                data: compTimingDataForChart,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v.toFixed(0) + '%' } },
+                                y: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => {
+                                            const value = context.parsed.x;
+                                            let tooltip = [`${comp.name}: ${value.toFixed(1)}%`];
+                                            if (mainTimingData && mainTimingData[context.dataIndex] !== undefined) {
+                                                const mainValue = mainTimingData[context.dataIndex];
+                                                const gap = mainValue - value;
+                                                tooltip.push(`${main.name}: ${mainValue.toFixed(1)}%`);
+                                                tooltip.push(`GAP: ${gap > 0 ? '+' : ''}${gap.toFixed(1)}%`);
+                                            }
+                                            return tooltip;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    if (compTimingCard) compTimingCard.style.display = 'block'; // 常に表示
+                }
+
+                // Update insight
+                let insightText = '';
+                if (main.upcomingData.insight) {
+                    insightText = main.upcomingData.insight;
+                }
+                if (comp && comp.upcomingData && comp.upcomingData.insight) {
+                    insightText += (insightText ? '\n\n' : '') + `【比較: ${comp.name}】\n${comp.upcomingData.insight}`;
+                }
+                document.getElementById('txt_upcoming_insight').innerText = insightText;
+            }
+
+            document.getElementById('movieSelector').addEventListener('change', () => {
+                const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab');
+                if (activeTab === 'pre-release') {
+                    const mainKey = document.getElementById('movieSelector').value;
+                    const compKey = document.getElementById('compareSelector').value;
+                    renderUpcomingCharts(mainKey, compKey);
+                } else {
+                    updateDashboard();
+                }
+            });
+            document.getElementById('compareSelector').addEventListener('change', () => {
+                const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab');
+                if (activeTab === 'pre-release') {
+                    const mainKey = document.getElementById('movieSelector').value;
+                    const compKey = document.getElementById('compareSelector').value;
+                    renderUpcomingCharts(mainKey, compKey);
+                } else {
+                    updateDashboard();
+                }
+            });
+
+            // Initial render
+            const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab');
+            if (activeTab === 'pre-release') {
+                const mainKey = document.getElementById('movieSelector').value;
+                const compKey = document.getElementById('compareSelector').value;
+                renderUpcomingCharts(mainKey, compKey);
+            } else {
+                updateDashboard();
+            }
         });
     </script>
 </body>
